@@ -26,10 +26,10 @@ public class SingleFileFieldAutoTests {
             if (path == null) {
                 throw new IllegalArgumentException("Path not specified");
             }
-            if (!(path instanceof File)) {
+            if (!(path instanceof String)) {
                 throw new IllegalArgumentException("path is not of file");
             }
-            return (File) path;
+            return new File((String)path);
         }
     };
 
