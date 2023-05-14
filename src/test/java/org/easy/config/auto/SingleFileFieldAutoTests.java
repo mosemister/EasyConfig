@@ -33,13 +33,16 @@ public class SingleFileFieldAutoTests {
         }
     };
 
-    /*@Test
+    @Test
     public void testLoad() {
         Map<String, Serializer<?>> serializers = new HashMap<>();
         serializers.put("file", FILE_SERIALIZER);
         AutoSerializer<TestClass> serializer = new AutoSerializer<>(TestClass.class, serializers);
         Map<String, Object> toLoad = new HashMap<>();
-        toLoad.put("fieldTest", "testfile.txt");
+        Map<String, Object> fileMap = new HashMap<>();
+      
+        fileMap.put("path", "testfile.txt");
+        toLoad.put("fieldTest", fileMap);
 
         //act
         TestClass clazz;
@@ -51,7 +54,7 @@ public class SingleFileFieldAutoTests {
 
         //assert
         Assertions.assertEquals("testfile.txt", clazz.fieldTest.getName());
-    }*/
+    }
 
     @Test
     public void testSerialize() {
