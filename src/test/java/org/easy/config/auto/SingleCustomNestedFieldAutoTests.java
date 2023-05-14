@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SingleNestedFieldAutoTests {
+public class SingleCustomNestedFieldAutoTests {
 
     @Test
     public void testLoad() {

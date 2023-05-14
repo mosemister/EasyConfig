@@ -124,11 +124,17 @@ public class AutoSerializer<T> implements Serializer<T> {
             ConfigField configField = field.getDeclaredAnnotation(ConfigField.class);
             if (configField != null && !configField.name().isEmpty()) {
                 name = configField.name();
+            }
+            if (configField != null && !configField.serializer().isEmpty()) {
                 serializerKey = configField.serializer();
             }
-            field.setAccessible(true);
-            Object obj = field.get(value);
-            field.setAccessible(false);
+            field.trySetAccessible();
+            Object obj;
+            try {
+                obj = field.get(value);
+            } catch (IllegalAccessException e) {
+                throw new IllegalStateException("Cannot access fields of " + field.getType().getSimpleName() + "(field inside " + value.getClass().getSimpleName() + ")" + " due to Java9 blocking. Create a manual serializer for the type of " + field.getType().getSimpleName(), e);
+            }
             //serialize object
             obj = serializeMap(obj, serializerKey, serializers);
             map.put(name, obj);
@@ -176,7 +182,7 @@ public class AutoSerializer<T> implements Serializer<T> {
             if (serializer == null) {
                 throw new IllegalStateException("Serializer for key '" + serializerString + "' cannot be found");
             }
-            return serializeOther(serializerString, serializer);
+            return serializeOther(obj, serializer);
         }
 
         //last resort
