@@ -1,23 +1,20 @@
 package org.easy.config.auto;
 
-import org.easy.config.Serializer;
 import org.easy.config.auto.annotations.ConfigConstructor;
+import org.easy.config.auto.annotations.ConfigField;
 import org.easy.config.common.FileSerializer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 
-public class SingleFileFieldAutoTests {
+public class SingleIntegratedFileFieldAutoTests {
+
     @Test
     public void testLoad() {
-        Collection<Serializer<?, ?>> serializers = new HashSet<>();
-        serializers.add(new FileSerializer());
-        AutoSerializer<TestClass> serializer = new AutoSerializer<>(TestClass.class, serializers);
+        AutoSerializer<TestClass> serializer = new AutoSerializer<>(TestClass.class);
         Map<String, Object> toLoad = new HashMap<>();
         toLoad.put("fieldTest", "testfile.txt");
 
@@ -33,12 +30,12 @@ public class SingleFileFieldAutoTests {
         Assertions.assertEquals("testfile.txt", clazz.fieldTest.getName());
     }
 
+    ;
+
     @Test
     public void testSerialize() {
-        Collection<Serializer<?, ?>> serializers = new HashSet<>();
-        serializers.add(new FileSerializer());
         TestClass toSerialize = new TestClass(new File("testfile.txt"));
-        AutoSerializer<TestClass> serializer = new AutoSerializer<>(TestClass.class, serializers);
+        AutoSerializer<TestClass> serializer = new AutoSerializer<>(TestClass.class);
 
         //act
         Map<String, Object> entries;
@@ -64,6 +61,8 @@ public class SingleFileFieldAutoTests {
     }
 
     public static class TestClass {
+
+        @ConfigField(serializer = FileSerializer.class)
         public final File fieldTest;
 
         @ConfigConstructor
