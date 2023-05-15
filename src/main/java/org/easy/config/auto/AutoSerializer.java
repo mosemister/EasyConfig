@@ -49,6 +49,7 @@ public class AutoSerializer<T> implements Serializer.KeyValue<T> {
             throw new IllegalStateException("Cannot find a constructor annotated with @ConfigConstructor in '" + this.ofType.getSimpleName() + "'");
         }
         Constructor<?> constructor = opConstructor.get();
+        constructor.setAccessible(true);
 
         Collection<Serializer<?, ?>> serializers = this.mapValue(this.ofType);
 

@@ -87,7 +87,7 @@ public class SingleBooleanFieldAutoTests {
         private final boolean fieldTest;
 
         @ConfigConstructor
-        public TestClass(boolean fieldTest) {
+        private TestClass(boolean fieldTest) {
             this.fieldTest = fieldTest;
         }
     }
