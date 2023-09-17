@@ -125,9 +125,17 @@ public class AutoSerializer<T> implements Serializer.KeyValue<T> {
         Object[] ret = new Object[list.size()];
         for (int i = 0; i < list.size(); i++) {
             String name = list.get(i);
-            Object value = map.entrySet().stream().filter(n -> name.equalsIgnoreCase(n.getKey())).findAny().map(Map.Entry::getValue).orElseThrow(() -> new IllegalArgumentException("Cannot find a parameter with the name of '" + name + "'"));
+            boolean isOptional = fields.stream().filter(field -> field.getName().equalsIgnoreCase(name)).findAny().map(field -> field.getAnnotation(ConfigField.class)).map(ConfigField::optional).orElse(false);
+            Optional<Object> opValue = map.entrySet().stream().filter(n -> name.equalsIgnoreCase(n.getKey())).findAny().map(Map.Entry::getValue);
+            if (!opValue.isPresent()) {
+                if (isOptional) {
+                    ret[i] = null;
+                    continue;
+                }
+                throw new IllegalArgumentException("No parameter of " + name);
+            }
+            Object value = opValue.get();
             Class<?> type = fields.get(i).getType();
-            //type = this.toPrimitive(type);
             Class<?> valueType = value.getClass();
             boolean isInstance = (type.isInstance(value) || this.toPrimitive(type).isInstance(value));
             boolean isEqualType = this.toPrimitive(type).equals(this.toPrimitive(valueType));
@@ -171,12 +179,12 @@ public class AutoSerializer<T> implements Serializer.KeyValue<T> {
             return deserialize(value, new AutoSerializer<>(type));
         }
         Optional<Serializer<?, ?>> opSerializer = serializers.stream().filter(s -> s.ofType().isAssignableFrom(type)).findFirst();
-        if(opSerializer.isPresent()){
+        if (opSerializer.isPresent()) {
             Serializer<?, ?> serializer = opSerializer.get();
             return deserialize(value, serializer);
         }
 
-        if(isAcceptable(value)){
+        if (isAcceptable(value)) {
             return value;
         }
         throw new IllegalStateException("Cannot find serializer for " + type.getSimpleName());
@@ -238,7 +246,7 @@ public class AutoSerializer<T> implements Serializer.KeyValue<T> {
         if (obj instanceof Collection<?>) {
             List<Object> list = new ArrayList<>();
             for (Object v : ((Collection<?>) obj)) {
-                if(isAcceptable(v)){
+                if (isAcceptable(v)) {
                     list.add(v);
                     continue;
                 }

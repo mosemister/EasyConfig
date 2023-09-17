@@ -19,4 +19,6 @@ public @interface ConfigField {
 
     String name() default "";
 
+    boolean optional() default false;
+
 }
