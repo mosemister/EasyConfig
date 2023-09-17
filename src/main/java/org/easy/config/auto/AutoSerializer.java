@@ -7,6 +7,7 @@ import org.easy.config.auto.annotations.ConfigField;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -37,6 +38,19 @@ public class AutoSerializer<T> implements Serializer.KeyValue<T> {
     @Override
     public Map<String, Object> serialize(T value) throws Exception {
         return values(value);
+    }
+
+    private boolean isAcceptable(Object v) {
+        if (toPrimitive(v.getClass()).isPrimitive()) {
+            return true;
+        }
+        if (v instanceof String) {
+            return true;
+        }
+        if (v instanceof Collection<?>) {
+            return ((Collection<?>) v).stream().allMatch(this::isAcceptable);
+        }
+        return false;
     }
 
     @Override
@@ -213,6 +227,18 @@ public class AutoSerializer<T> implements Serializer.KeyValue<T> {
         if (obj instanceof String) {
             return obj;
         }
+        if (obj instanceof Collection<?>) {
+            List<Object> list = new ArrayList<>();
+            for (Object v : ((Collection<?>) obj)) {
+                if(isAcceptable(v)){
+                    list.add(v);
+                    continue;
+                }
+                Object result = new AutoSerializer<>(v.getClass()).serialize(v);
+                list.add(result);
+            }
+            return list;
+        }
         if (serializerToUse != null) {
             return serializeOther(obj, serializerToUse);
         }
@@ -257,6 +283,7 @@ public class AutoSerializer<T> implements Serializer.KeyValue<T> {
 
     private List<Field> fields(Class<?> ofType) {
         return allFields(ofType).stream()
+                .filter(field -> !Modifier.isStatic(field.getModifiers()))
                 .filter(field -> {
                     if (!field.isAnnotationPresent(ConfigField.class)) {
                         return true;
