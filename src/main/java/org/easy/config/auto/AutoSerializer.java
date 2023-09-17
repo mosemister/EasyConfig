@@ -170,8 +170,16 @@ public class AutoSerializer<T> implements Serializer.KeyValue<T> {
         if (isAutoSerializable(type)) {
             return deserialize(value, new AutoSerializer<>(type));
         }
-        Serializer<?, ?> serializer = serializers.stream().filter(s -> s.ofType().isAssignableFrom(type)).findFirst().orElseThrow(() -> new IllegalStateException("Cannot find serializer for " + type.getSimpleName()));
-        return deserialize(value, serializer);
+        Optional<Serializer<?, ?>> opSerializer = serializers.stream().filter(s -> s.ofType().isAssignableFrom(type)).findFirst();
+        if(opSerializer.isPresent()){
+            Serializer<?, ?> serializer = opSerializer.get();
+            return deserialize(value, serializer);
+        }
+
+        if(isAcceptable(value)){
+            return value;
+        }
+        throw new IllegalStateException("Cannot find serializer for " + type.getSimpleName());
     }
 
     private <T> Object serializeType(Class<?> type, T value, Collection<Serializer<?, ?>> serializers) throws Exception {
