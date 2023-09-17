@@ -234,7 +234,7 @@ public class AutoSerializer<T> implements Serializer.KeyValue<T> {
                     list.add(v);
                     continue;
                 }
-                Object result = new AutoSerializer<>(v.getClass()).serialize(v);
+                Object result = new AutoSerializer<>(v.getClass(), serializers).serialize(v);
                 list.add(result);
             }
             return list;
