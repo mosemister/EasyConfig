@@ -3,6 +3,7 @@ package org.easy.config.auto;
 import org.easy.config.Serializer;
 import org.easy.config.auto.annotations.ConfigConstructor;
 import org.easy.config.auto.annotations.ConfigField;
+import org.easy.config.auto.annotations.ConfigList;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -135,8 +136,30 @@ public class AutoSerializer<T> implements Serializer.KeyValue<T> {
                 throw new IllegalArgumentException("No parameter of " + name);
             }
             Object value = opValue.get();
-            Class<?> type = fields.get(i).getType();
+            if (value instanceof Collection) {
+
+                Collection<?> valueCollection = (Collection<?>) value;
+                if (!valueCollection.isEmpty()) {
+                    Object firstValue = valueCollection.iterator().next();
+                    if (firstValue instanceof Map) {
+                        ConfigList configList = fields.get(i).getAnnotation(ConfigList.class);
+                        if (configList == null) {
+                            throw new IllegalStateException("List fields of none standard types require '@ConfigList' annotation");
+                        }
+
+                        value = valueCollection.stream().map(v -> (Map<String, Object>) v).map(v -> {
+                            try {
+                                return new AutoSerializer<>(configList.ofType(), serializers).deserialize(v);
+                            } catch (Exception e) {
+                                throw new RuntimeException(e);
+                            }
+                        }).collect(Collectors.toList());
+
+                    }
+                }
+            }
             Class<?> valueType = value.getClass();
+            Class<?> type = fields.get(i).getType();
             boolean isInstance = (type.isInstance(value) || this.toPrimitive(type).isInstance(value));
             boolean isEqualType = this.toPrimitive(type).equals(this.toPrimitive(valueType));
             if (!isInstance && !isEqualType) {

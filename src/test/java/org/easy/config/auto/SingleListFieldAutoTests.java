@@ -1,18 +1,23 @@
 package org.easy.config.auto;
 
 import org.easy.config.auto.annotations.ConfigConstructor;
+import org.easy.config.auto.annotations.ConfigList;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SingleListFieldAutoTests {
 
     @Test
     public void testLoad() {
         AutoSerializer<TestClass> serializer = new AutoSerializer<>(TestClass.class);
+        Map<String, Object> internal = new HashMap<>();
+        internal.put("example", true);
         Map<String, Object> toLoad = new HashMap<>();
-        toLoad.put("fieldTest", Collections.singletonList(true));
+        toLoad.put("fieldTest", Collections.singletonList(internal));
 
         //act
         TestClass clazz;
@@ -24,7 +29,7 @@ public class SingleListFieldAutoTests {
 
         //assert
         Assertions.assertFalse(clazz.fieldTest.isEmpty());
-        Assertions.assertTrue(clazz.fieldTest.get(0));
+        Assertions.assertTrue(clazz.fieldTest.get(0).example);
     }
 
     @Test
@@ -71,7 +76,13 @@ public class SingleListFieldAutoTests {
         Assertions.assertEquals(1, entries.size());
         Map.Entry<String, Object> entry = entries.entrySet().iterator().next();
         Assertions.assertEquals("fieldTest", entry.getKey());
-        Assertions.assertEquals(Collections.singletonList(true), entry.getValue());
+        List<Map<String, Object>> listValue = (List<Map<String, Object>>) entry.getValue();
+        Assertions.assertEquals(listValue.size(), 1);
+        entries = listValue.get(0);
+        Assertions.assertEquals(entries.size(), 1);
+        entry = entries.entrySet().iterator().next();
+        Assertions.assertEquals(entry.getKey(), "example");
+        Assertions.assertEquals(entry.getValue(), true);
     }
 
     @Test
@@ -82,16 +93,28 @@ public class SingleListFieldAutoTests {
         Assertions.assertThrows(IllegalArgumentException.class, () -> serializer.serialize(null));
     }
 
+    private static class InternalClass {
+
+
+        private final boolean example;
+
+        @ConfigConstructor
+        public InternalClass(boolean example) {
+            this.example = example;
+        }
+    }
+
     public static class TestClass {
 
-        private final List<Boolean> fieldTest;
+        @ConfigList(ofType = InternalClass.class)
+        private final List<InternalClass> fieldTest;
 
         private TestClass(Boolean... values) {
-            this(Arrays.asList(values));
+            this(Stream.of(values).map(InternalClass::new).collect(Collectors.toList()));
         }
 
         @ConfigConstructor
-        private TestClass(Collection<Boolean> fieldTest) {
+        private TestClass(Collection<InternalClass> fieldTest) {
             this.fieldTest = new ArrayList<>(fieldTest);
         }
     }
